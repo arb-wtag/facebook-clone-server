@@ -9,6 +9,7 @@ const userRoutes=require('./routes/userRoutes');
 const postRoutes=require('./routes/postRoutes');
 const likeRoutes=require('./routes/likeRoutes');
 const commentRoutes=require('./routes/commentRoutes');
+const friendRoutes=require('./routes/friendRoutes');
 
 const app=express();
 
@@ -24,6 +25,7 @@ app.use('/api/users',userRoutes);
 app.use('/api/posts',postRoutes);
 app.use('/api/likes',likeRoutes);
 app.use('/api/comments',commentRoutes);
+app.use('/api/friends',friendRoutes);
 
 const server=http.createServer(app);
 
