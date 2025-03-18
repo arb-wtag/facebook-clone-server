@@ -18,12 +18,14 @@ const getProfile=async (req,res)=>{
 const updateProfile=async (req,res)=>{
     try{
         const id=req.params.id;
-        const { username,bio,photo }=req.body;
-        if(req.user.id!==id)
+        const { username,bio }=req.body;
+        const photo = req.file ? `http://localhost:5000/uploads/${req.file.filename}` : null;
+        //console.log(req.user.id,id);
+        if(req.user.id!==parseInt(id))
         {
             return res.status(403).json({message:"Unauthorized action"});
         }
-        await pool.query("UPDATE users SET username=$1, bio=$2, photo=$3 WHERE id=$4",[username,bio,photo]);
+        await pool.query("UPDATE users SET username=$1, bio=$2, photo=$3 WHERE id=$4",[username,bio,photo,id]);
         res.json({message:'Profile updated successfully'});
     }
     catch(error)

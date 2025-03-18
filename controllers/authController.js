@@ -51,4 +51,18 @@ const logout=(req,res)=>{
     res.json({'message':'Logged out successfully'});
 }
 
-module.exports={ register,login,logout };
+const checkLogin=async (req,res)=>{
+    try{
+        const user = await pool.query("SELECT id, username, email, photo FROM users WHERE id = $1", [req.user.id]);
+        if(user.rows.length===0)
+        {
+            return res.status(404).json({message:'User not found'});
+        }
+        res.json(user.rows[0]);
+    }
+    catch(error){
+        res.status(500).json({'error':error.message});
+    }
+}
+
+module.exports={ register,login,logout,checkLogin };

@@ -10,6 +10,8 @@ const postRoutes=require('./routes/postRoutes');
 const likeRoutes=require('./routes/likeRoutes');
 const commentRoutes=require('./routes/commentRoutes');
 const friendRoutes=require('./routes/friendRoutes');
+const groupRoutes=require('./routes/groupRoutes');
+const path=require('path');
 
 const app=express();
 
@@ -20,12 +22,15 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 app.use('/api/auth',authRoutes);
 app.use('/api/users',userRoutes);
 app.use('/api/posts',postRoutes);
 app.use('/api/likes',likeRoutes);
 app.use('/api/comments',commentRoutes);
 app.use('/api/friends',friendRoutes);
+app.use('/api/groups',groupRoutes);
 
 const server=http.createServer(app);
 
