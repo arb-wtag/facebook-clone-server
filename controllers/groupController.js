@@ -103,7 +103,7 @@ const deleteGroup=async (req,res)=>{
 const getUserGroups=async (req,res)=>{
     try{
         const user_id=req.user.id;
-        const result=await pool.query("SELECT groups.id, groups.name, groups.description, group_members.role FROM group_members JOIN groups ON group_members.group_id = groups.id WHERE group_members.user_id = $1",[user_id]);
+        const result=await pool.query("SELECT groups.id, groups.admin_id, groups.name, groups.description, group_members.role FROM group_members JOIN groups ON group_members.group_id = groups.id WHERE group_members.user_id = $1",[user_id]);
         res.json(result.rows);
     }
     catch(error){

@@ -11,6 +11,7 @@ const likeRoutes=require('./routes/likeRoutes');
 const commentRoutes=require('./routes/commentRoutes');
 const friendRoutes=require('./routes/friendRoutes');
 const groupRoutes=require('./routes/groupRoutes');
+const inboxRoutes=require('./routes/inboxRoutes');
 const path=require('path');
 
 const app=express();
@@ -31,6 +32,7 @@ app.use('/api/likes',likeRoutes);
 app.use('/api/comments',commentRoutes);
 app.use('/api/friends',friendRoutes);
 app.use('/api/groups',groupRoutes);
+app.use('/api/inbox',inboxRoutes);
 
 const server=http.createServer(app);
 

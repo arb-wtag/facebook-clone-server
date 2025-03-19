@@ -20,7 +20,7 @@ const acceptFriendRequest=async (req,res)=>{
     try{
         const friend_id=req.params.friend_id;
         const user_id=req.user.id;
-        await pool.query("UPDATE friendships SET status = 'accepted' WHERE user_id = $1 AND friend_id = $2 AND status = 'pending'",[user_id,friend_id]);
+        await pool.query("UPDATE friendships SET status = 'accepted' WHERE user_id = $2 AND friend_id = $1 AND status = 'pending'",[user_id,friend_id]);
         res.json({'message':'friend request accepted'});
     }
     catch(error){
@@ -32,7 +32,7 @@ const declineFriendRequest=async (req,res)=>{
     try{
         const friend_id=req.params.friend_id;
         const user_id=req.user.id;
-        await pool.query("DELETE FROM friendships WHERE user_id = $1 AND friend_id = $2 AND status = 'pending'",[user_id,friend_id]);
+        await pool.query("DELETE FROM friendships WHERE user_id = $2 AND friend_id = $1 AND status = 'pending'",[user_id,friend_id]);
         res.json({'message':'friend request declined'});
     }
     catch(error){
@@ -55,7 +55,15 @@ const removeFriend=async (req,res)=>{
 const getFriendList=async (req,res)=>{
     try{
         const user_id=req.user.id;
-        const result=await pool.query("SELECT users.id, users.username, users.photo FROM friendships JOIN users ON friendships.friend_id = users.id WHERE friendships.user_id = $1 AND friendships.status = 'accepted'",[user_id]);
+        const result=await pool.query(`SELECT users.id, users.username, users.photo 
+            FROM friendships 
+            JOIN users ON users.id = 
+                CASE 
+                    WHEN friendships.user_id = $1 THEN friendships.friend_id
+                    ELSE friendships.user_id
+                END
+            WHERE (friendships.user_id = $1 OR friendships.friend_id = $1) 
+            AND friendships.status = 'accepted'`,[user_id]);
         res.json(result.rows);
     }
     catch(error){
