@@ -199,6 +199,87 @@ const deleteGroupPost = async (req, res) => {
       console.error("Error deleting group post:", error);
       res.status(500).json({ error: "Failed to delete post" });
     }
-};  
+};
 
-module.exports={ createGroup,joinGroup,leaveGroup,getGroupMembers,changeUserRole,deleteGroup,getUserGroups,getAllGroups,getGroupPosts,createGroupPost,deleteGroupPost };
+const groupInvite=async (req, res) => {
+  try {
+      const { groupId } = req.params;
+      const { receiverId } = req.body;
+      const senderId = req.user.id;
+
+      const memberCheck = await pool.query(
+          "SELECT * FROM group_members WHERE group_id = $1 AND user_id = $2",
+          [groupId, receiverId]
+      );
+      if (memberCheck.rows.length > 0) {
+          return res.status(400).json({ message: "User is already a member of this group." });
+      }
+
+      const inviteCheck = await pool.query(
+          "SELECT * FROM group_invitations WHERE group_id = $1 AND receiver_id = $2 AND status = 'pending'",
+          [groupId, receiverId]
+      );
+      if (inviteCheck.rows.length > 0) {
+          return res.status(400).json({ message: "Invitation already sent." });
+      }
+
+      await pool.query(
+          "INSERT INTO group_invitations (group_id, sender_id, receiver_id) VALUES ($1, $2, $3)",
+          [groupId, senderId, receiverId]
+      );
+
+      res.json({ message: "Invitation sent successfully." });
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+};
+
+const acceptInvite=async (req, res) => {
+  try {
+      const { inviteId } = req.params;
+      const userId = req.user.id;
+
+      const invite = await pool.query(
+          "SELECT * FROM group_invitations WHERE id = $1 AND receiver_id = $2 AND status = 'pending'",
+          [inviteId, userId]
+      );
+
+      if (invite.rows.length === 0) {
+          return res.status(400).json({ message: "Invalid or expired invitation." });
+      }
+
+      await pool.query(
+          "INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)",
+          [invite.rows[0].group_id, userId]
+      );
+
+      await pool.query(
+          "UPDATE group_invitations SET status = 'accepted' WHERE id = $1",
+          [inviteId]
+      );
+
+      res.json({ message: "You have joined the group." });
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+};
+
+const getInvites=async (req, res) => {
+  try {
+      const userId = req.user.id;
+
+      const result = await pool.query(`
+          SELECT gi.id, g.name AS group_name, u.username AS sender_name 
+          FROM group_invitations gi
+          JOIN groups g ON gi.group_id = g.id
+          JOIN users u ON gi.sender_id = u.id
+          WHERE gi.receiver_id = $1 AND gi.status = 'pending'
+      `, [userId]);
+
+      res.json(result.rows);
+  } catch (error) {
+      res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports={ createGroup,joinGroup,leaveGroup,getGroupMembers,changeUserRole,deleteGroup,getUserGroups,getAllGroups,getGroupPosts,createGroupPost,deleteGroupPost,groupInvite,acceptInvite,getInvites };

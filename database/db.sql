@@ -66,3 +66,12 @@ CREATE TABLE friendships (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, friend_id)
 );
+
+CREATE TABLE group_invitations (
+    id SERIAL PRIMARY KEY,
+    group_id INT REFERENCES groups(id) ON DELETE CASCADE,
+    sender_id INT REFERENCES users(id) ON DELETE CASCADE,
+    receiver_id INT REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) CHECK (status IN ('pending', 'accepted', 'declined')) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

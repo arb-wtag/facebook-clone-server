@@ -1,22 +1,50 @@
 const pool=require('../database/db');
+const sharp = require('sharp');
+const fs = require('fs');
 
 const createPost=async (req,res)=>{
     try{
         const { content,group_id }=req.body;
         const user_id=req.user.id;
-        const image=req.file ? `/uploads/${req.file.filename}`: null;
+        const imagePath=`uploads/compressed-${Date.now()}.jpg`;
+
+        await sharp(req.file.path)
+            .resize({ width: 800 })
+            .jpeg({ quality: 70 })  
+            .toFile(imagePath);
+
+            fs.unlink(req.file.path, (error) => {
+                if (error) console.error("Error deleting original file:", error);
+            });
+
+        const image = `http://localhost:5000/${imagePath}`;
+
         const result=await pool.query("INSERT INTO posts (user_id, group_id, content, image) VALUES ($1, $2, $3, $4) RETURNING *",[user_id,group_id || null,content,image]);
         res.status(201).json(result.rows[0]);
     }
     catch(error)
     {
+        console.error("Error processing image:", error);
         res.status(500).json({'error':error.message});
     }
 };
 
 const getAllPosts=async (req,res)=>{
     try{
-        const result=await pool.query("SELECT posts.*, users.username, users.photo AS user_photo, groups.name AS group_name FROM posts JOIN users ON posts.user_id = users.id LEFT JOIN groups ON posts.group_id = groups.id ORDER BY posts.created_at DESC");
+        //const result=await pool.query("SELECT posts.*, users.username, users.photo AS user_photo, groups.name AS group_name FROM posts JOIN users ON posts.user_id = users.id LEFT JOIN groups ON posts.group_id = groups.id ORDER BY posts.created_at DESC");
+        const id=req.user.id;
+        const result=await pool.query(`
+            SELECT posts.*, users.username, users.photo AS user_photo 
+            FROM posts
+            JOIN users ON posts.user_id = users.id
+            WHERE posts.user_id = $1
+            OR posts.user_id IN (
+                SELECT friend_id FROM friendships WHERE user_id = $1 AND status = 'accepted'
+                UNION
+                SELECT user_id FROM friendships WHERE friend_id = $1 AND status = 'accepted'
+            )
+            ORDER BY posts.created_at DESC
+            `,[id]);
         res.json(result.rows);
     }
     catch(error)

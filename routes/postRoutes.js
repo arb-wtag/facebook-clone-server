@@ -14,10 +14,13 @@ const storage=multer.diskStorage({
     },
 });
 
-const upload=multer({storage});
+const upload=multer({
+    storage,
+    limits: {fileSize: 10*1024*1024},
+});
 
 router.post('/',authMiddleware,upload.single('image'),createPost);
-router.get('/',getAllPosts);
+router.get('/',authMiddleware,getAllPosts);
 router.get('/user/:user_id',getUserPosts);
 //router.get('/group/:group_id',getGroupPosts);
 router.delete('/:id',authMiddleware,deletePost);
