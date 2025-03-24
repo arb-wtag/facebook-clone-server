@@ -77,7 +77,7 @@ const searchUser=async (req, res) => {
         if (!username) return res.status(400).json({ error: "Username is required" });
 
         const users = await pool.query(
-            "SELECT id, username FROM users WHERE username = $1",
+            "SELECT id, username, photo FROM users WHERE username = $1",
             [username]
         );
 

@@ -4,9 +4,9 @@ const authMiddleware=require('../middlewares/authMiddleware');
 
 const router=express.Router();
 
-router.post('/register',register);
-router.post('/login',login);
-router.post('/logout',logout);
-router.get('/check-login',authMiddleware,checkLogin);
+router.post('/register',register); //
+router.post('/login',login); //
+router.post('/logout',logout); //
+router.get('/check-login',authMiddleware,checkLogin); //
 
 module.exports=router;

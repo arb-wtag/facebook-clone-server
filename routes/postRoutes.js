@@ -19,10 +19,10 @@ const upload=multer({
     limits: {fileSize: 10*1024*1024},
 });
 
-router.post('/',authMiddleware,upload.single('image'),createPost);
-router.get('/',authMiddleware,getAllPosts);
-router.get('/user/:user_id',getUserPosts);
+router.post('/',authMiddleware,upload.single('image'),createPost); //
+router.get('/',authMiddleware,getAllPosts); //
+router.get('/user/:user_id',getUserPosts); //
 //router.get('/group/:group_id',getGroupPosts);
-router.delete('/:id',authMiddleware,deletePost);
+router.delete('/:id',authMiddleware,deletePost); //
 
 module.exports=router;
