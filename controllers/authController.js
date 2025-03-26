@@ -1,8 +1,41 @@
 const bcrypt=require('bcryptjs');
 const jwt=require('jsonwebtoken');
 const pool=require('../database/db');
+const { body, validationResult }=require('express-validator');
+
+const validateRegister = [
+    body("username")
+        .trim()
+        .isLength({ min: 3 })
+        .withMessage("Username must be at least 3 characters long")
+        .isAlphanumeric()
+        .withMessage("Username must contain only letters and numbers")
+        .escape(),
+    body("email")
+        .isEmail()
+        .withMessage("Invalid email format")
+        .normalizeEmail(),
+    body("password")
+        .isLength({ min: 6 })
+        .withMessage("Password must be at least 6 characters long"),
+];
+
+const validateLogin = [
+    body("email")
+        .isEmail()
+        .withMessage("Invalid email format")
+        .normalizeEmail(),
+    body("password")
+        .notEmpty()
+        .withMessage("Password is required"),
+];
 
 const register=async (req,res)=>{
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try{
         const { username,email,password }=req.body;
         const existingUser=await pool.query("SELECT * FROM users WHERE username=$1 OR email=$2",[username,email]);
@@ -22,6 +55,11 @@ const register=async (req,res)=>{
 };
 
 const login=async (req,res)=>{
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try{
         const { email,password }=req.body;
         const user=await pool.query("SELECT * FROM users WHERE email=$1",[email]);
@@ -65,4 +103,4 @@ const checkLogin=async (req,res)=>{
     }
 }
 
-module.exports={ register,login,logout,checkLogin };
+module.exports={ register,login,logout,checkLogin,validateRegister,validateLogin };

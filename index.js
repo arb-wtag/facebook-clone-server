@@ -13,6 +13,7 @@ const friendRoutes=require('./routes/friendRoutes');
 const groupRoutes=require('./routes/groupRoutes');
 const inboxRoutes=require('./routes/inboxRoutes');
 const path=require('path');
+const { apiLimiter } = require('./middlewares/rateLimiterMiddleware');
 
 const app=express();
 
@@ -22,6 +23,8 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+
+app.use("/api", apiLimiter);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
