@@ -5,9 +5,15 @@ const fs = require('fs');
 const createPost=async (req,res)=>{
     try{
         const { content,group_id }=req.body;
+        if(content.length>500)
+        {
+            return res.status(400).json({message:'Post content cannot exceed 500 characters'});
+        }
         const user_id=req.user.id;
-        const imagePath=`uploads/compressed-${Date.now()}.jpg`;
-        if(req.file){
+        //const imagePath=`uploads/compressed-${Date.now()}.jpg`;
+        //console.log(typeof content);
+        let imagePaths = [];
+        /*if(req.file){
         await sharp(req.file.path)
             .resize({ width: 800 })
             .jpeg({ quality: 70 })  
@@ -16,11 +22,29 @@ const createPost=async (req,res)=>{
             fs.unlink(req.file.path, (error) => {
                 if (error) console.error("Error deleting original file:", error);
             });
+        }*/
+
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const compressedPath = `uploads/compressed-${Date.now()}-${file.filename}.jpg`;
+    
+                await sharp(file.path)
+                      .resize({ width: 800 })
+                      .jpeg({ quality: 70 })
+                      .toFile(compressedPath);
+    
+                // Delete the original uploaded file
+                fs.unlink(file.path, (error) => {
+                    if (error) console.error("Error deleting original file:", error);
+                });
+    
+                imagePaths.push(`http://localhost:5000/${compressedPath}`);
+            }
         }
 
-        const image = req.file ? `http://localhost:5000/${imagePath}` : null;
+        //const image = req.file ? `http://localhost:5000/${imagePath}` : null;
 
-        const result=await pool.query("INSERT INTO posts (user_id, group_id, content, image) VALUES ($1, $2, $3, $4) RETURNING *",[user_id,group_id || null,content,image]);
+        const result=await pool.query("INSERT INTO posts (user_id, group_id, content, image) VALUES ($1, $2, $3, $4) RETURNING *",[user_id,group_id || null,content,imagePaths.length > 0 ? JSON.stringify(imagePaths) : null]);
         res.status(201).json(result.rows[0]);
     }
     catch(error)
