@@ -9,6 +9,16 @@ const sendFriendRequest = async (req, res) => {
         .status(400)
         .json({ message: "You cannot send a friend request to yourself" });
     }
+
+    const existingFriendship = await pool.query(
+      "SELECT * FROM friendships WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)",
+      [user_id, friend_id]
+    );
+
+    if (existingFriendship.rows.length > 0) {
+      return res.status(400).json({ message: "You are already friends or request is pending" });
+    }
+
     await pool.query(
       "INSERT INTO friendships (user_id, friend_id, status) VALUES ($1, $2, 'pending') ON CONFLICT (user_id, friend_id) DO NOTHING",
       [user_id, friend_id]
